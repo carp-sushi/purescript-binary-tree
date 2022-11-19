@@ -115,9 +115,8 @@ instance bindTree :: Bind Tree where
     go (Branch y t1' t2') = Branch y (select (bind t1 f) t1') (select (bind t2 f) t2')
     -- Best effort to select a non-nil chicl branch
     select Nil Nil = Nil
-    select t1'' Nil = t1''
     select Nil t2'' = t2''
-    select t1'' _ = t1'' -- when in doubt, choos the result from bind
+    select t1'' _ = t1'' -- choose the result from bind when not nil
 
 -- | Define monad on tree.
 instance monadTree :: Monad Tree
