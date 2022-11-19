@@ -1,6 +1,6 @@
 module Main where
 
-import Prelude (Unit, discard, map, ($), (+))
+import Prelude (Unit, discard, map, pure, ($), (+), (>>=))
 
 import Data.Semigroup (class Semigroup, (<>))
 import Effect (Effect)
@@ -46,3 +46,6 @@ main = do
   logShow tree
   logShow inverted
   logShow $ treeSum tree inverted
+  log "---"
+  logShow $ map (_+1) tree
+  logShow $ (pure (_+1) >>= \f -> map f tree)

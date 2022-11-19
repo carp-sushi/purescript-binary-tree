@@ -23,7 +23,7 @@ import Prelude
   , (<$>)
   , (<*>)
   )
-import Control.Monad (class Applicative, class Apply, class Bind, class Monad, ap, bind, pure)
+import Control.Monad (class Applicative, class Apply, class Bind, class Monad, apply, bind, pure)
 import Data.Foldable (class Foldable, foldr, foldl)
 import Data.Functor (class Functor, map)
 import Data.Maybe (Maybe(..))
@@ -94,7 +94,12 @@ instance foldableTree :: Foldable Tree where
 
 -- | Define apply for tree.
 instance applyTree :: Apply Tree where
-  apply = ap
+  apply Nil _ = Nil
+  apply _ Nil = Nil
+  apply ft@(Branch f _ _) (Branch x t1 t2) =
+    Branch (f x) (apply ft t1) (apply ft t2)
+
+--  apply = ap
 
 -- | Define applicative for tree
 instance applicativeTree :: Applicative Tree where
@@ -105,9 +110,14 @@ instance bindTree :: Bind Tree where
   bind Nil _ = Nil
   bind (Branch x t1 t2) f = go (f x)
     where
+    -- Unpack function result to process children
     go Nil = Nil
-    go (Branch y _ _) =
-      Branch y (bind t1 f) (bind t2 f)
+    go (Branch y t1' t2') = Branch y (select (bind t1 f) t1') (select (bind t2 f) t2')
+    -- Best effort to select a non-nil chicl branch
+    select Nil Nil = Nil
+    select t1'' Nil = t1''
+    select Nil t2'' = t2''
+    select t1'' _ = t1'' -- when in doubt, choos the result from bind
 
 -- | Define monad on tree.
 instance monadTree :: Monad Tree
@@ -160,14 +170,14 @@ remove x (Branch y t1 t2) =
 -- | Find the deepest left value of a tree.
 min :: forall a. Ord a => Tree a -> Maybe a
 min Nil = Nothing
-min (Branch x t1 _) =
-  if t1 == Nil then (Just x) else min t1
+min (Branch x Nil _) = Just x
+min (Branch _ t1 _) = min t1
 
 -- | Find the deepest right value of a tree.
 max :: forall a. Ord a => Tree a -> Maybe a
 max Nil = Nothing
-max (Branch x _ t2) =
-  if t2 == Nil then (Just x) else max t2
+max (Branch x _ Nil) = Just x
+max (Branch _ _ t2) = max t2
 
 -- | Invert a tree
 invert :: forall a. Ord a => Tree a -> Tree a

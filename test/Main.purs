@@ -174,7 +174,7 @@ applicativeLaws :: TestSuite
 applicativeLaws = do
   suite "applicative laws" do
     test "identity" do
-      let v = leaf 9 -- TODO: Why does passing tree here fail?
+      let v = tree
       Assert.equal ((pure identity) <*> v) v
     test "composition" do
       let
@@ -198,15 +198,17 @@ applicativeLaws = do
 bindLaws :: TestSuite
 bindLaws = do
   suite "bind laws" do
-    let x = tree
     test "associativity" do
       let
+        x = tree
         f = \i -> mkTree [ i + 1 ]
         g = \i -> mkTree [ i * 2 ]
       Assert.equal ((x >>= f) >>= g) (x >>= (\k -> f k >>= g))
     test "apply superclass" do
-      let f = Branch (_ + 1) Nil Nil
-      Assert.equal (f >>= (\f' -> map f' x)) (apply f x)
+      let
+        f = Branch (_ + 1) Nil Nil
+        x = tree
+      Assert.equal (apply f x) (f >>= \f' -> map f' x)
 
 -- Tests for monad laws
 monadLaws :: TestSuite
