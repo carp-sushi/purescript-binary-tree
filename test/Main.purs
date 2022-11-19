@@ -6,9 +6,11 @@ import Prelude
   , discard
   , identity
   , map
+  , pure
   , show
   , (+)
   , (*)
+  , ($)
   , (<>)
   , (<$>)
   , (<*>)
@@ -16,13 +18,12 @@ import Prelude
   , (<<<)
   )
 
-import Control.Monad (pure)
 import Data.Foldable (foldl, foldr, foldMap)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse, sequence)
 import Effect (Effect)
-import Test.Unit (suite, test)
+import Test.Unit (TestSuite, suite, test)
 import Test.Unit.Assert as Assert
 import Test.Unit.Main (runTest)
 
@@ -105,8 +106,21 @@ numTree =
 
 -- Run the unit tests
 main :: Effect Unit
-main = runTest do
-  suite "Tree tests" do
+main =
+  runTest do
+    treeTests
+    functorLaws
+    applyLaws
+    applicativeLaws
+    bindLaws
+    monadLaws
+    foldableTests
+    traversableTests
+
+-- Tests binary tree operations
+treeTests :: TestSuite
+treeTests = do
+  suite "Basic tree operations" do
     test "to/from array" do
       Assert.equal tree (mkTree numbers)
       Assert.equal numbers (toArray tree)
@@ -117,12 +131,17 @@ main = runTest do
       Assert.equal removed7 (remove 7 tree)
       Assert.equal removed4 (remove 4 tree)
       Assert.equal tree (remove 99 tree)
-    test "max" do
-      Assert.equal (Just 9) (max tree)
-      Assert.equal Nothing (max nilTree)
+    test "search" do
+      Assert.equal (Branch 7 (leaf 6) (leaf 9)) (search 7 tree)
+      Assert.equal Nil (search 99 tree)
     test "min" do
       Assert.equal (Just 1) (min tree)
       Assert.equal Nothing (min nilTree)
+    test "max" do
+      Assert.equal (Just 9) (max tree)
+      Assert.equal Nothing (max nilTree)
+    test "invert" do
+      Assert.equal inverted (invert tree)
     test "contains" do
       Assert.equal true (contains 7 tree)
       Assert.equal false (contains 99 tree)
@@ -130,45 +149,111 @@ main = runTest do
       Assert.equal true (isLeaf (leaf 9))
       Assert.equal false (isLeaf tree)
       Assert.equal false (isLeaf nilTree)
-    test "invert" do
-      Assert.equal inverted (invert tree)
-    test "search" do
-      Assert.equal (Branch 7 (leaf 6) (leaf 9)) (search 7 tree)
-      Assert.equal Nil (search 99 tree)
-    test "functor" do
-      let
-        f = \i -> i + 1
-        g = \i -> i * 2
-        h = tree
+
+-- Tests for functor laws
+functorLaws :: TestSuite
+functorLaws = do
+  suite "functor laws" do
+    let
+      h = tree
+      f = \i -> i + 1
+      g = \i -> i * 2
+    test "identity" do
       Assert.equal (identity h) (map identity h)
+    test "composition" do
       Assert.equal (map (g <<< f) h) ((map g <<< map f) h)
-    test "apply" do
+
+-- Tests for apply laws
+applyLaws :: TestSuite
+applyLaws = do
+  suite "apply laws" do
+    test "associative composition" do
       let
         f = Branch (_ + 1) Nil Nil
         g = Branch (_ * 2) Nil Nil
         h = tree
       Assert.equal ((<<<) <$> f <*> g <*> h) (f <*> (g <*> h))
-    test "bind" do
+
+-- Tests for apply laws
+applicativeLaws :: TestSuite
+applicativeLaws = do
+  suite "applicative laws" do
+    test "identity" do
+      let v = leaf 9 -- TODO: Why does passing tree here fail?
+      Assert.equal ((pure identity) <*> v) v
+    test "composition" do
+      let
+        f = Branch (_ + 1) Nil Nil
+        g = Branch (_ * 2) Nil Nil
+        h = tree
+      Assert.equal (pure (<<<) <*> f <*> g <*> h) (f <*> (g <*> h))
+    test "homomorphism" do
+      let
+        f = toArray
+        puref = (pure f) :: Tree (Tree Int -> Array Int)
+        x = tree
+      Assert.equal (puref <*> (pure x)) ((pure (f x)) :: Tree (Array Int))
+    test "interchange" do
+      let
+        u = (pure toArray) :: Tree (Tree Int -> Array Int)
+        y = tree
+      Assert.equal (u <*> (pure y)) ((pure (_ $ y)) <*> u)
+
+-- Tests for bind laws
+bindLaws :: TestSuite
+bindLaws = do
+  suite "bind laws" do
+    let x = tree
+    test "associativity" do
       let
         f = \i -> mkTree [ i + 1 ]
         g = \i -> mkTree [ i * 2 ]
-        x = tree
-        f2 = Branch (_ + 1) Nil Nil
       Assert.equal ((x >>= f) >>= g) (x >>= (\k -> f k >>= g))
-      Assert.equal (f2 >>= (\f' -> map f' x)) (apply f2 x)
-    test "monad" do
-      let
-        x = tree
-        f = toArray
+    test "apply superclass" do
+      let f = Branch (_ + 1) Nil Nil
+      Assert.equal (f >>= (\f' -> map f' x)) (apply f x)
+
+-- Tests for monad laws
+monadLaws :: TestSuite
+monadLaws = do
+  suite "monad laws" do
+    let
+      x = tree
+      f = toArray
+    test "left identity" do
       Assert.equal (pure x >>= f) (f x)
+    test "right identity" do
       Assert.equal (x >>= pure) x
-    test "foldable" do
+
+-- Tests for foldable
+foldableTests :: TestSuite
+foldableTests = do
+  suite "foldable tests" do
+    test "fold left" do
       Assert.equal "1234679" (foldl (\a x -> a <> show x) "" tree)
+    test "fold right" do
       Assert.equal "9764321" (foldr (\x a -> a <> show x) "" tree)
+    test "fold map" do
       Assert.equal [ 2, 4, 6, 8, 12, 14, 18 ] (foldMap (\x -> [ 2 * x ]) tree)
+
+-- Tests for traversable
+traversableTests :: TestSuite
+traversableTests = do
+  suite "traversable tests" do
     test "traverse" do
       Assert.equal (Just numTree) (traverse fromNumber (mkTree [ 2.0, 1.0, 3.0 ]))
       Assert.equal Nothing (traverse fromNumber (mkTree [ 2.0, 1.5, 3.0 ]))
     test "sequence" do
       Assert.equal (Just numTree) (sequence (mkTree [ Just 2, Just 1, Just 3 ]))
       Assert.equal Nothing (sequence (mkTree [ Just 2, Nothing, Just 3 ]))
+    test "compatibility" do
+      -- TODO: What is runConst?
+      --let f = \i -> 2 * i
+      --Assert.equal (foldMap f tree) ((runConst <<< traverse (Const <<< f)) tree)
+      Assert.equal
+        (traverse fromNumber (mkTree [ 2.0, 1.0, 3.0 ]))
+        (sequence (fromNumber <$> (mkTree [ 2.0, 1.0, 3.0 ])))
+      Assert.equal
+        (sequence (mkTree [ Just 2, Just 1, Just 3 ]))
+        (traverse identity (mkTree [ Just 2, Just 1, Just 3 ]))
+

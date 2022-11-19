@@ -16,7 +16,6 @@ import Prelude
   ( class Eq
   , class Ord
   , class Show
-  , apply
   , compare
   , show
   , (==)
@@ -24,7 +23,7 @@ import Prelude
   , (<$>)
   , (<*>)
   )
-import Control.Monad (class Applicative, class Apply, class Bind, class Monad, bind, pure)
+import Control.Monad (class Applicative, class Apply, class Bind, class Monad, ap, bind, pure)
 import Data.Foldable (class Foldable, foldr, foldl)
 import Data.Functor (class Functor, map)
 import Data.Maybe (Maybe(..))
@@ -95,10 +94,7 @@ instance foldableTree :: Foldable Tree where
 
 -- | Define apply for tree.
 instance applyTree :: Apply Tree where
-  apply Nil _ = Nil
-  apply _ Nil = Nil
-  apply (Branch f f1 f2) (Branch x t1 t2) =
-    (Branch (f x) (apply f1 t1) (apply f2 t2))
+  apply = ap
 
 -- | Define applicative for tree
 instance applicativeTree :: Applicative Tree where
