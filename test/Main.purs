@@ -99,11 +99,6 @@ nilTree :: Tree Int
 nilTree =
   Nil
 
--- Expected tree from traverse and sequence tests
-numTree :: Tree Int
-numTree =
-  (Branch 2 (leaf 1) (leaf 3))
-
 -- Run the unit tests
 main :: Effect Unit
 main =
@@ -234,26 +229,27 @@ foldableTests = do
     test "fold right" do
       Assert.equal "9764321" (foldr (\x a -> a <> show x) "" tree)
     test "fold map" do
-      Assert.equal [ 2, 4, 6, 8, 12, 14, 18 ] (foldMap (\x -> [ 2 * x ]) tree)
+      let twiceArray = [ 2, 4, 6, 8, 12, 14, 18 ]
+      Assert.equal twiceArray (foldMap (\x -> [ 2 * x ]) tree)
 
--- Tests for traversable
+-- Tests for traversable.
+-- TODO: What is runConst?
+--   let f = \i -> 2 * i
+--   Assert.equal (foldMap f tree) ((runConst <<< traverse (Const <<< f)) tree)
 traversableTests :: TestSuite
 traversableTests = do
   suite "traversable tests" do
+    let
+      t1 = mkTree [ 2.0, 1.0, 3.0 ]
+      t2 = mkTree [ Just 2, Just 1, Just 3 ]
+      te = Just (Branch 2 (leaf 1) (leaf 3)) -- expected tree
     test "traverse" do
-      Assert.equal (Just numTree) (traverse fromNumber (mkTree [ 2.0, 1.0, 3.0 ]))
+      Assert.equal te (traverse fromNumber t1)
       Assert.equal Nothing (traverse fromNumber (mkTree [ 2.0, 1.5, 3.0 ]))
     test "sequence" do
-      Assert.equal (Just numTree) (sequence (mkTree [ Just 2, Just 1, Just 3 ]))
+      Assert.equal te (sequence t2)
       Assert.equal Nothing (sequence (mkTree [ Just 2, Nothing, Just 3 ]))
     test "compatibility" do
-      -- TODO: What is runConst?
-      --let f = \i -> 2 * i
-      --Assert.equal (foldMap f tree) ((runConst <<< traverse (Const <<< f)) tree)
-      Assert.equal
-        (traverse fromNumber (mkTree [ 2.0, 1.0, 3.0 ]))
-        (sequence (fromNumber <$> (mkTree [ 2.0, 1.0, 3.0 ])))
-      Assert.equal
-        (sequence (mkTree [ Just 2, Just 1, Just 3 ]))
-        (traverse identity (mkTree [ Just 2, Just 1, Just 3 ]))
+      Assert.equal (traverse fromNumber t1) (sequence (fromNumber <$> t1))
+      Assert.equal (sequence t2) (traverse identity t2)
 
