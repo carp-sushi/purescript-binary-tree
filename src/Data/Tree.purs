@@ -1,9 +1,7 @@
 module Data.Tree
   ( Tree(..)
-  , contains
   , insert
   , invert
-  , isLeaf
   , max
   , min
   , mkTree
@@ -33,7 +31,7 @@ import Data.Semigroup (class Semigroup, (<>))
 import Data.Traversable (class Traversable, traverse, sequence)
 
 -- | A tree is either nil or a branch with a value and two sub-trees. The left tree of a
--- | a branch contains values less than its element. The right contains greater elements. 
+-- | a branch contains values less than its element; the right, greater. 
 data Tree a
   = Nil
   | Branch a (Tree a) (Tree a)
@@ -99,8 +97,6 @@ instance applyTree :: Apply Tree where
   apply ft@(Branch f _ _) (Branch x t1 t2) =
     Branch (f x) (apply ft t1) (apply ft t2)
 
---  apply = ap
-
 -- | Define applicative for tree
 instance applicativeTree :: Applicative Tree where
   pure a = Branch a Nil Nil
@@ -112,11 +108,13 @@ instance bindTree :: Bind Tree where
     where
     -- Unpack function result to process children
     go Nil = Nil
-    go (Branch y t1' t2') = Branch y (select (bind t1 f) t1') (select (bind t2 f) t2')
-    -- Best effort to select a non-nil chicl branch
-    select Nil Nil = Nil
-    select Nil t2'' = t2''
-    select t1'' _ = t1'' -- choose the result from bind when not nil
+    go (Branch y t1' t2') =
+      Branch y
+        (go' (bind t1 f) t1')
+        (go' (bind t2 f) t2')
+    -- Determine which bind tree to use (prefer bind result unless nil)
+    go' Nil t2'' = t2''
+    go' t1'' _ = t1''
 
 -- | Define monad on tree.
 instance monadTree :: Monad Tree
@@ -132,19 +130,10 @@ instance traversableTree :: Traversable Tree where
   sequence (Branch x t1 t2) =
     Branch <$> x <*> sequence t1 <*> sequence t2
 
--- | Build a tree from an array
-mkTree :: forall a. Ord a => Array a -> Tree a
-mkTree xs =
-  foldl (\t x -> insert x t) Nil xs
-
--- | Search for the sub-tree with the given root element
-search :: forall a. Ord a => a -> Tree a -> Tree a
-search _ Nil = Nil
-search x b@(Branch y t1 t2) =
-  case (compare x y) of
-    LT -> search x t1
-    GT -> search x t2
-    EQ -> b
+-- | Build a tree from a foldable type.
+mkTree :: forall f a. Foldable f => Ord a => f a -> Tree a
+mkTree =
+  foldl (\t x -> insert x t) Nil
 
 -- | Add an element to a tree
 insert :: forall a. Ord a => a -> Tree a -> Tree a
@@ -153,6 +142,15 @@ insert x b@(Branch y t1 t2) =
   case (compare x y) of
     GT -> Branch y t1 (insert x t2)
     LT -> Branch y (insert x t1) t2
+    EQ -> b
+
+-- | Search for the sub-tree with the given root element
+search :: forall a. Ord a => a -> Tree a -> Tree a
+search _ Nil = Nil
+search x b@(Branch y t1 t2) =
+  case (compare x y) of
+    LT -> search x t1
+    GT -> search x t2
     EQ -> b
 
 -- | Remove an element from a tree.
@@ -183,19 +181,6 @@ invert :: forall a. Ord a => Tree a -> Tree a
 invert Nil = Nil
 invert (Branch a t1 t2) =
   Branch a (invert t2) (invert t1)
-
--- | Determine whether a tree contains an element.
-contains :: forall a. Ord a => a -> Tree a -> Boolean
-contains x t =
-  case (search x t) of
-    Nil -> false
-    _ -> true
-
--- | Deterine whether a tree is a leaf - a branch with an element and no children.
-isLeaf :: forall a. Ord a => Tree a -> Boolean
-isLeaf Nil = false
-isLeaf (Branch _ t1 t2) =
-  t1 == Nil && t2 == Nil
 
 -- | Create an array from a tree (depth first).
 toArray :: forall a. Tree a -> Array a

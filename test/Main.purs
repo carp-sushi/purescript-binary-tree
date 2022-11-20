@@ -30,10 +30,8 @@ import Test.Unit.Main (runTest)
 -- Under test
 import Data.Tree
   ( Tree(..)
-  , contains
   , insert
   , invert
-  , isLeaf
   , max
   , min
   , mkTree
@@ -122,13 +120,13 @@ treeTests = do
     test "insert" do
       Assert.equal tree2 (insert 10 tree)
       Assert.equal (Branch 6 (leaf 5) (leaf 7)) (mkTree [ 6, 5, 5, 5, 5, 5, 5, 7, 5, 5 ])
+    test "search" do
+      Assert.equal (Branch 7 (leaf 6) (leaf 9)) (search 7 tree)
+      Assert.equal Nil (search 99 tree)
     test "remove" do
       Assert.equal removed7 (remove 7 tree)
       Assert.equal removed4 (remove 4 tree)
       Assert.equal tree (remove 99 tree)
-    test "search" do
-      Assert.equal (Branch 7 (leaf 6) (leaf 9)) (search 7 tree)
-      Assert.equal Nil (search 99 tree)
     test "min" do
       Assert.equal (Just 1) (min tree)
       Assert.equal Nothing (min nilTree)
@@ -137,13 +135,6 @@ treeTests = do
       Assert.equal Nothing (max nilTree)
     test "invert" do
       Assert.equal inverted (invert tree)
-    test "contains" do
-      Assert.equal true (contains 7 tree)
-      Assert.equal false (contains 99 tree)
-    test "isLeaf" do
-      Assert.equal true (isLeaf (leaf 9))
-      Assert.equal false (isLeaf tree)
-      Assert.equal false (isLeaf nilTree)
 
 -- Tests for functor laws
 functorLaws :: TestSuite

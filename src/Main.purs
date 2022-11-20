@@ -1,12 +1,12 @@
 module Main where
 
-import Prelude (Unit, discard, map, pure, ($), (+), (>>=))
+import Prelude (Unit, discard, map, ($), (+))
 
 import Data.Semigroup (class Semigroup, (<>))
 import Effect (Effect)
 import Effect.Console (log, logShow)
 
-import Data.Tree (Tree, toArray, mkTree, invert, insert, remove, search)
+import Data.Tree (Tree, insert, invert, mkTree, remove, search, toArray)
 
 -- | Need to wrap Int type to implement semigroup.
 newtype MyInt = MyInt Int
@@ -42,10 +42,8 @@ main = do
   logShow $ remove 7 tree
   log "Search 7"
   logShow $ search 7 tree
-  log "Node Sum"
+  log "Tree Sum"
   logShow tree
   logShow inverted
   logShow $ treeSum tree inverted
-  log "---"
-  logShow $ map (_+1) tree
-  logShow $ (pure (_+1) >>= \f -> map f tree)
+
