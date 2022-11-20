@@ -114,12 +114,12 @@ main =
 treeTests :: TestSuite
 treeTests = do
   suite "Basic tree operations" do
-    test "to/from array" do
+    test "constructor" do
       Assert.equal tree (mkTree numbers)
-      Assert.equal numbers (toArray tree)
     test "insert" do
       Assert.equal tree2 (insert 10 tree)
       Assert.equal (Branch 6 (leaf 5) (leaf 7)) (mkTree [ 6, 5, 5, 5, 5, 5, 5, 7, 5, 5 ])
+      Assert.equal tree (insert 2 tree)
     test "search" do
       Assert.equal (Branch 7 (leaf 6) (leaf 9)) (search 7 tree)
       Assert.equal Nil (search 99 tree)
@@ -135,6 +135,8 @@ treeTests = do
       Assert.equal Nothing (max nilTree)
     test "invert" do
       Assert.equal inverted (invert tree)
+    test "to array" do
+      Assert.equal numbers (toArray tree)
 
 -- Tests for functor laws
 functorLaws :: TestSuite
