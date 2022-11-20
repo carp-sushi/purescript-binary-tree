@@ -144,8 +144,8 @@ functorLaws = do
   suite "functor laws" do
     let
       h = tree
-      f = \i -> i + 1
-      g = \i -> i * 2
+      f = (_ + 1)
+      g = (_ * 2)
     test "identity" do
       Assert.equal (identity h) (map identity h)
     test "composition" do
@@ -157,8 +157,8 @@ applyLaws = do
   suite "apply laws" do
     test "associative composition" do
       let
-        f = Branch (_ + 1) Nil Nil
-        g = Branch (_ * 2) Nil Nil
+        f = pure (_ + 1)
+        g = pure (_ * 2)
         h = tree
       Assert.equal ((<<<) <$> f <*> g <*> h) (f <*> (g <*> h))
 
@@ -171,8 +171,8 @@ applicativeLaws = do
       Assert.equal ((pure identity) <*> v) v
     test "composition" do
       let
-        f = Branch (_ + 1) Nil Nil
-        g = Branch (_ * 2) Nil Nil
+        f = pure (_ + 1)
+        g = pure (_ * 2)
         h = tree
       Assert.equal (pure (<<<) <*> f <*> g <*> h) (f <*> (g <*> h))
     test "homomorphism" do
@@ -199,7 +199,7 @@ bindLaws = do
       Assert.equal ((x >>= f) >>= g) (x >>= (\k -> f k >>= g))
     test "apply superclass" do
       let
-        f = Branch (_ + 1) Nil Nil
+        f = pure (_ + 1)
         x = tree
       Assert.equal (apply f x) (f >>= \f' -> map f' x)
 
@@ -220,12 +220,14 @@ foldableTests :: TestSuite
 foldableTests = do
   suite "foldable tests" do
     test "fold left" do
-      Assert.equal "1234679" (foldl (\a x -> a <> show x) "" tree)
+      let accShow = \acc x -> acc <> show x
+      Assert.equal "1234679" (foldl accShow "" tree)
     test "fold right" do
-      Assert.equal "9764321" (foldr (\x a -> a <> show x) "" tree)
+      let accShow = \x acc -> acc <> show x
+      Assert.equal "9764321" (foldr accShow "" tree)
     test "fold map" do
-      let twiceArray = [ 2, 4, 6, 8, 12, 14, 18 ]
-      Assert.equal twiceArray (foldMap (\x -> [ 2 * x ]) tree)
+      let array2x = [ 2, 4, 6, 8, 12, 14, 18 ]
+      Assert.equal array2x (foldMap (\x -> [ 2 * x ]) tree)
 
 -- Tests for traversable.
 -- TODO: What is runConst?
@@ -237,12 +239,12 @@ traversableTests = do
     let
       t1 = mkTree [ 2.0, 1.0, 3.0 ]
       t2 = mkTree [ Just 2, Just 1, Just 3 ]
-      te = Just (Branch 2 (leaf 1) (leaf 3)) -- expected tree
+      expected = Just $ mkTree [ 2, 1, 3 ] -- expected result
     test "traverse" do
-      Assert.equal te (traverse fromNumber t1)
+      Assert.equal expected (traverse fromNumber t1)
       Assert.equal Nothing (traverse fromNumber (mkTree [ 2.0, 1.5, 3.0 ]))
     test "sequence" do
-      Assert.equal te (sequence t2)
+      Assert.equal expected (sequence t2)
       Assert.equal Nothing (sequence (mkTree [ Just 2, Nothing, Just 3 ]))
     test "compatibility" do
       Assert.equal (traverse fromNumber t1) (sequence (fromNumber <$> t1))
