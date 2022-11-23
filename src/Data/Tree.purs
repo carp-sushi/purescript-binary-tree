@@ -137,7 +137,7 @@ mkTree =
 
 -- | Add an element to a tree
 insert :: forall a. Ord a => a -> Tree a -> Tree a
-insert x Nil = Branch x Nil Nil
+insert x Nil = pure x
 insert x b@(Branch y t1 t2) =
   case (compare x y) of
     GT -> Branch y t1 (insert x t2)
