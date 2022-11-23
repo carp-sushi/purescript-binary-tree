@@ -4,6 +4,7 @@ import Prelude
   ( Unit
   , apply
   , discard
+  , flip
   , identity
   , map
   , pure
@@ -118,7 +119,7 @@ treeTests = do
       Assert.equal tree (mkTree numbers)
     test "insert" do
       Assert.equal tree2 (insert 10 tree)
-      Assert.equal (Branch 6 (leaf 5) (leaf 7)) (mkTree [ 6, 5, 5, 5, 5, 5, 5, 7, 5, 5 ])
+      Assert.equal (mkTree [ 6, 5, 7 ]) (mkTree [ 6, 5, 7, 6, 5, 7, 6, 5, 7 ])
       Assert.equal tree (insert 2 tree)
     test "search" do
       Assert.equal (Branch 7 (leaf 6) (leaf 9)) (search 7 tree)
@@ -194,8 +195,8 @@ bindLaws = do
     test "associativity" do
       let
         x = tree
-        f = \i -> mkTree [ i + 1 ]
-        g = \i -> mkTree [ i * 2 ]
+        f = \i -> pure (i + 1)
+        g = \i -> pure (i * 2)
       Assert.equal ((x >>= f) >>= g) (x >>= (\k -> f k >>= g))
     test "apply superclass" do
       let
@@ -219,15 +220,13 @@ monadLaws = do
 foldableTests :: TestSuite
 foldableTests = do
   suite "foldable tests" do
+    let accShow = \acc x -> acc <> show x
     test "fold left" do
-      let accShow = \acc x -> acc <> show x
       Assert.equal "1234679" (foldl accShow "" tree)
     test "fold right" do
-      let accShow = \x acc -> acc <> show x
-      Assert.equal "9764321" (foldr accShow "" tree)
+      Assert.equal "9764321" (foldr (flip accShow) "" tree)
     test "fold map" do
-      let array2x = [ 2, 4, 6, 8, 12, 14, 18 ]
-      Assert.equal array2x (foldMap (\x -> [ 2 * x ]) tree)
+      Assert.equal ([ 2, 4, 6, 8, 12, 14, 18 ]) (foldMap (\x -> [ 2 * x ]) tree)
 
 -- Tests for traversable.
 -- TODO: What is runConst?
