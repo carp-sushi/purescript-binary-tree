@@ -21,7 +21,15 @@ import Prelude
   , (<$>)
   , (<*>)
   )
-import Control.Monad (class Applicative, class Apply, class Bind, class Monad, apply, bind, pure)
+import Control.Monad
+  ( class Applicative
+  , class Apply
+  , class Bind
+  , class Monad
+  , apply
+  , bind
+  , pure
+  )
 import Data.Foldable (class Foldable, foldr, foldl)
 import Data.Functor (class Functor, map)
 import Data.Maybe (Maybe(..))
@@ -140,18 +148,18 @@ insert :: forall a. Ord a => a -> Tree a -> Tree a
 insert x Nil = pure x
 insert x b@(Branch y t1 t2) =
   case (compare x y) of
+    EQ -> b
     GT -> Branch y t1 (insert x t2)
     LT -> Branch y (insert x t1) t2
-    EQ -> b
 
 -- | Search for the sub-tree with the given root element
 search :: forall a. Ord a => a -> Tree a -> Tree a
 search _ Nil = Nil
 search x b@(Branch y t1 t2) =
   case (compare x y) of
+    EQ -> b
     LT -> search x t1
     GT -> search x t2
-    EQ -> b
 
 -- | Remove an element from a tree.
 remove :: forall a. Ord a => a -> Tree a -> Tree a
@@ -161,8 +169,8 @@ remove x (Branch y t1 t2) =
     LT -> Branch y (remove x t1) t2
     GT -> Branch y t1 (remove x t2)
     EQ -> case (min t2) of -- find smallest value > x
-      Nothing -> t1
       (Just z) -> Branch z t1 (remove z t2)
+      Nothing -> t1
 
 -- | Find the deepest left value of a tree.
 min :: forall a. Ord a => Tree a -> Maybe a
