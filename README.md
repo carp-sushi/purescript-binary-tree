@@ -16,7 +16,7 @@ This project contains the following typeclass instances:
 - Foldable
 - Traversable
 
-The following laws are satisfied via unit testing:
+The following laws are satisfied and verified in the project unit tests
 
 - Functor 
   - Identity: `map identity = identidty`
