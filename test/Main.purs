@@ -144,13 +144,13 @@ functorLaws :: TestSuite
 functorLaws = do
   suite "functor laws" do
     let
-      h = tree
       f = (_ + 1)
       g = (_ * 2)
+      h = tree
     test "identity" do
       Assert.equal (identity h) (map identity h)
     test "composition" do
-      Assert.equal (map (g <<< f) h) ((map g <<< map f) h)
+      Assert.equal (map (f <<< g) h) ((map f <<< map g) h)
 
 -- Tests for apply laws
 applyLaws :: TestSuite
