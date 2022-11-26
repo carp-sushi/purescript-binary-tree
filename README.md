@@ -16,6 +16,8 @@ This project contains the following typeclass instances:
 - Foldable
 - Traversable
 
+## Laws
+
 The following laws are satisfied and verified in the project unit tests
 
 - Functor 

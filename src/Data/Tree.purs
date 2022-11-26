@@ -118,11 +118,11 @@ instance bindTree :: Bind Tree where
     go Nil = Nil
     go (Branch y t1' t2') =
       Branch y
-        (go' (bind t1 f) t1')
-        (go' (bind t2 f) t2')
+        ((bind t1 f) `orElse` t1')
+        ((bind t2 f) `orElse` t2')
     -- Determine which bind tree to use (prefer bind result unless nil)
-    go' Nil t2'' = t2''
-    go' t1'' _ = t1''
+    orElse Nil t = t
+    orElse t _ = t
 
 -- | Define monad on tree.
 instance monadTree :: Monad Tree
@@ -173,19 +173,19 @@ remove x (Branch y t1 t2) =
       Nothing -> t1
 
 -- | Find the deepest left value of a tree.
-min :: forall a. Ord a => Tree a -> Maybe a
+min :: forall a. Tree a -> Maybe a
 min Nil = Nothing
 min (Branch x Nil _) = Just x
 min (Branch _ t1 _) = min t1
 
 -- | Find the deepest right value of a tree.
-max :: forall a. Ord a => Tree a -> Maybe a
+max :: forall a. Tree a -> Maybe a
 max Nil = Nothing
 max (Branch x _ Nil) = Just x
 max (Branch _ _ t2) = max t2
 
 -- | Invert a tree
-invert :: forall a. Ord a => Tree a -> Tree a
+invert :: forall a. Tree a -> Tree a
 invert Nil = Nil
 invert (Branch a t1 t2) =
   Branch a (invert t2) (invert t1)
