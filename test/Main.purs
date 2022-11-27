@@ -47,8 +47,7 @@ numbers = [ 4, 2, 1, 3, 7, 6, 9 ]
 
 -- Leaf helper function
 leaf :: Int -> Tree Int
-leaf a =
-  Branch a Nil Nil
+leaf a = pure a
 
 -- Expected tree
 tree :: Tree Int
