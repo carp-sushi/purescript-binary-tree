@@ -187,8 +187,8 @@ max (Branch _ _ t2) = max t2
 -- | Invert a tree
 invert :: forall a. Tree a -> Tree a
 invert Nil = Nil
-invert (Branch a t1 t2) =
-  Branch a (invert t2) (invert t1)
+invert (Branch x t1 t2) =
+  Branch x (invert t2) (invert t1)
 
 -- | Create an array from a tree (depth first).
 toArray :: forall a. Tree a -> Array a

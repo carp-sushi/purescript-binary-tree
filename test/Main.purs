@@ -121,7 +121,7 @@ treeTests = do
       Assert.equal (mkTree [ 6, 5, 7 ]) (mkTree [ 6, 5, 7, 6, 5, 7, 6, 5, 7 ])
       Assert.equal tree (insert 2 tree)
     test "search" do
-      Assert.equal (Branch 7 (leaf 6) (leaf 9)) (search 7 tree)
+      Assert.equal (mkTree [ 7, 6, 9 ]) (search 7 tree)
       Assert.equal Nil (search 99 tree)
     test "remove" do
       Assert.equal removed7 (remove 7 tree)
@@ -191,26 +191,22 @@ applicativeLaws = do
 bindLaws :: TestSuite
 bindLaws = do
   suite "bind laws" do
+    let x = tree
     test "associativity" do
-      let
-        x = tree
-        f = \i -> pure (i + 1)
-        g = \i -> pure (i * 2)
+      let f = \i -> pure (i + 1)
+      let g = \i -> pure (i * 2)
       Assert.equal ((x >>= f) >>= g) (x >>= (\k -> f k >>= g))
     test "apply superclass" do
-      let
-        f = pure (_ + 1)
-        x = tree
+      let f = pure (_ + 1)
       Assert.equal (apply f x) (f >>= \f' -> map f' x)
 
 -- Tests for monad laws
 monadLaws :: TestSuite
 monadLaws = do
   suite "monad laws" do
-    let
-      x = tree
-      f = toArray
+    let x = tree
     test "left identity" do
+      let f = toArray
       Assert.equal (pure x >>= f) (f x)
     test "right identity" do
       Assert.equal (x >>= pure) x
