@@ -1,12 +1,12 @@
 module Main where
 
-import Prelude (Unit, discard, map, ($), (+), (*), (<<<))
+import Prelude (Unit, discard, map, pure, ($), (+), (*), (<<<))
 
 import Data.Semigroup (class Semigroup, (<>))
 import Effect (Effect)
 import Effect.Console (log, logShow)
 
-import Data.Tree (Tree, insert, invert, max, min, mkTree, remove, search, toArray)
+import Data.Tree (Tree, insert, invert, max, min, mkTree, remove, search, toArray, (:+))
 
 -- | Need to wrap Int type to implement semigroup.
 newtype MyInt = MyInt Int
@@ -56,3 +56,5 @@ main = do
   log "Tree x 2"
   logShow $ map (_*2) tree
 
+  log ":+"
+  logShow $ 9 :+ 6 :+ 7 :+ 3 :+ 1 :+ 2 :+ (pure 4)

@@ -8,6 +8,7 @@ module Data.Tree
   , remove
   , search
   , toArray
+  , (:+)
   ) where
 
 import Prelude
@@ -47,9 +48,9 @@ data Tree a
 -- | Convert a tree to a string
 instance showTree :: Show a => Show (Tree a) where
   show Nil = "Nil"
-  show (Branch a t1 t2) =
+  show (Branch x t1 t2) =
     "(Branch "
-      <> (show a)
+      <> (show x)
       <> " "
       <> (show t1)
       <> " "
@@ -141,7 +142,7 @@ instance traversableTree :: Traversable Tree where
 -- | Build a tree from a foldable type.
 mkTree :: forall f a. Foldable f => Ord a => f a -> Tree a
 mkTree =
-  foldl (\t x -> insert x t) Nil
+  foldl (\t x -> x :+ t) Nil
 
 -- | Add an element to a tree
 insert :: forall a. Ord a => a -> Tree a -> Tree a
@@ -151,6 +152,9 @@ insert x b@(Branch y t1 t2) =
     EQ -> b
     GT -> Branch y t1 (insert x t2)
     LT -> Branch y (insert x t1) t2
+
+-- | Insert infix operator
+infixr 5 insert as :+
 
 -- | Search for the sub-tree with the given root element
 search :: forall a. Ord a => a -> Tree a -> Tree a
