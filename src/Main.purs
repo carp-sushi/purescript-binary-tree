@@ -17,6 +17,7 @@ import Data.Tree
   , search
   , toArray
   , (:+)
+  , (+:)
   )
 
 -- | Need to wrap Int type to implement semigroup.
@@ -46,6 +47,8 @@ main = do
   logShow tree
   log ":+"
   logShow $ 9 :+ 6 :+ 7 :+ 3 :+ 1 :+ 2 :+ 4 :+ Nil
+  log "+:"
+  logShow $ Nil +: 4 +: 2 +: 1 +: 3 +: 7 +: 6 +: 9
 
   log "Inverted Tree"
   logShow inverted

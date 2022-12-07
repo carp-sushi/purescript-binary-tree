@@ -39,6 +39,8 @@ import Data.Tree
   , remove
   , search
   , toArray
+  , (:+)
+  , (+:)
   )
 
 -- Input
@@ -52,44 +54,44 @@ leaf a = pure a
 -- Expected tree
 tree :: Tree Int
 tree =
-  ( Branch 4
-      (Branch 2 (leaf 1) (leaf 3))
-      (Branch 7 (leaf 6) (leaf 9))
+  ( Node 4
+      (Node 2 (leaf 1) (leaf 3))
+      (Node 7 (leaf 6) (leaf 9))
   )
 
 -- Expected tree with 10 added
 tree2 :: Tree Int
 tree2 =
-  ( Branch 4
-      (Branch 2 (leaf 1) (leaf 3))
-      ( Branch 7
+  ( Node 4
+      (Node 2 (leaf 1) (leaf 3))
+      ( Node 7
           (leaf 6)
-          (Branch 9 Nil (leaf 10))
+          (Node 9 Nil (leaf 10))
       )
   )
 
 -- Expected inverted tree
 inverted :: Tree Int
 inverted =
-  ( Branch 4
-      (Branch 7 (leaf 9) (leaf 6))
-      (Branch 2 (leaf 3) (leaf 1))
+  ( Node 4
+      (Node 7 (leaf 9) (leaf 6))
+      (Node 2 (leaf 3) (leaf 1))
   )
 
 -- Expected tree after removal of 7
 removed7 :: Tree Int
 removed7 =
-  ( Branch 4
-      (Branch 2 (leaf 1) (leaf 3))
-      (Branch 9 (leaf 6) Nil)
+  ( Node 4
+      (Node 2 (leaf 1) (leaf 3))
+      (Node 9 (leaf 6) Nil)
   )
 
 -- Expected tree after removal of 4 (the root)
 removed4 :: Tree Int
 removed4 =
-  ( Branch 6
-      (Branch 2 (leaf 1) (leaf 3))
-      (Branch 7 Nil (leaf 9))
+  ( Node 6
+      (Node 2 (leaf 1) (leaf 3))
+      (Node 7 Nil (leaf 9))
   )
 
 -- An empty tree
@@ -120,6 +122,7 @@ treeTests = do
       Assert.equal tree2 (insert 10 tree)
       Assert.equal (mkTree [ 6, 5, 7 ]) (mkTree [ 6, 5, 7, 6, 5, 7, 6, 5, 7 ])
       Assert.equal tree (insert 2 tree)
+      Assert.equal (Nil +: 2 +: 3 +: 1) (1 :+ 3 :+ 2 :+ Nil)
     test "search" do
       Assert.equal (mkTree [ 7, 6, 9 ]) (search 7 tree)
       Assert.equal Nil (search 99 tree)
@@ -135,6 +138,7 @@ treeTests = do
       Assert.equal Nothing (max nilTree)
     test "invert" do
       Assert.equal inverted (invert tree)
+      Assert.equal tree (invert $ invert tree)
     test "to array" do
       Assert.equal numbers (toArray tree)
 
@@ -221,7 +225,7 @@ foldableTests = do
     test "fold right" do
       Assert.equal "9764321" (foldr (flip accShow) "" tree)
     test "fold map" do
-      Assert.equal ([ 2, 4, 6, 8, 12, 14, 18 ]) (foldMap (\x -> [ 2 * x ]) tree)
+      Assert.equal [ 2, 4, 6, 8, 12, 14, 18 ] (foldMap (\x -> [ 2 * x ]) tree)
 
 -- Tests for traversable.
 -- TODO: What is runConst?
