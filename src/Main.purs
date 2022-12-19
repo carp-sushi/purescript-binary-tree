@@ -1,8 +1,9 @@
 module Main where
 
-import Prelude (Unit, discard, map, ($), (+), (*), (<<<))
+import Prelude (class Eq, Unit, discard, map, ($), (+), (*), (<<<))
 
 import Data.Semigroup (class Semigroup, (<>))
+import Data.Semiring (class Semiring)
 import Effect (Effect)
 import Effect.Console (log, logShow)
 
@@ -20,19 +21,28 @@ import Data.Tree
   , (+:)
   )
 
--- | Need to wrap Int type to implement semigroup.
+-- | Need to wrap Int type to define append (ie Semigroup).
 newtype MyInt = MyInt Int
+
+-- | Defer to underlying Int for Semiring (to get addition).
+derive newtype instance semiringMyInt :: Semiring MyInt
+
+-- | Defer to underlying Int for Eq.
+derive newtype instance eqMyInt :: Eq MyInt
+
+-- | Define append as addition for MyInt.
 instance semigroupMyInt :: Semigroup MyInt where
-  append (MyInt x) (MyInt y) = MyInt (x + y)
+  append x y = x + y
 
 -- | Add two Int trees.
 treeSum :: Tree Int -> Tree Int -> Tree Int
 treeSum tree1 tree2 =
-  map unwrap (t1 <> t2)
-  where
-  t1 = map MyInt tree1
-  t2 = map MyInt tree2
-  unwrap = \(MyInt i) -> i
+  let
+    t1 = map MyInt tree1
+    t2 = map MyInt tree2
+    unwrap = \(MyInt i) -> i
+  in
+    map unwrap (t1 <> t2)
 
 -- | Demonstrate some basic operations on trees
 main :: Effect Unit

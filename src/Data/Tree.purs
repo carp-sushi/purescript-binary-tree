@@ -21,7 +21,6 @@ import Prelude
   , flip
   , show
   , (==)
-  , (&&)
   , (<$>)
   , (<*>)
   )
@@ -34,10 +33,10 @@ import Control.Monad
   , bind
   , pure
   )
-import Data.Foldable (class Foldable, foldr, foldl)
-import Data.Functor (class Functor, map)
+import Data.Foldable (class Foldable, foldl)
+import Data.Functor (class Functor)
 import Data.Maybe (Maybe(..))
-import Data.Monoid (class Monoid, mempty)
+import Data.Monoid (class Monoid)
 import Data.Ordering (Ordering(..))
 import Data.Semigroup (class Semigroup, (<>))
 import Data.Traversable (class Traversable, traverse, sequence)
@@ -60,19 +59,11 @@ instance showTree :: Show a => Show (Tree a) where
       <> (show t2)
       <> ")"
 
--- | Determine whether trees are equal
-instance eqTree :: Eq a => Eq (Tree a) where
-  eq Nil Nil = true
-  eq _ Nil = false
-  eq Nil _ = false
-  eq (Node x ta tb) (Node y tc td) =
-    (x == y) && (ta == tc) && (tb == td)
+-- | Derive tree equality
+derive instance eqTree :: Eq a => Eq (Tree a)
 
 -- | Map a function over a tree
-instance functorTree :: Functor Tree where
-  map _ Nil = Nil
-  map f (Node x t1 t2) =
-    Node (f x) (map f t1) (map f t2)
+derive instance functorTree :: Functor Tree
 
 -- | Combine two trees
 instance semigroupTree :: Semigroup a => Semigroup (Tree a) where
@@ -87,22 +78,7 @@ instance monoidTree :: Semigroup (Tree a) => Monoid (Tree a) where
   mempty = Nil
 
 -- | Define how to fold over a tree.
-instance foldableTree :: Foldable Tree where
-  -- fold map
-  foldMap f =
-    foldl (\acc x -> acc <> (f x)) mempty
-  -- right fold
-  foldr _ acc Nil = acc
-  foldr f acc (Node x t1 t2) = foldr f acc' t1
-    where
-    acc'' = foldr f acc t2
-    acc' = f x acc''
-  -- left fold
-  foldl _ acc Nil = acc
-  foldl f acc (Node x t1 t2) = foldl f acc' t2
-    where
-    acc'' = foldl f acc t1
-    acc' = f acc'' x
+derive instance foldableTree :: Foldable Tree
 
 -- | Define apply for tree.
 instance applyTree :: Apply Tree where
@@ -113,7 +89,7 @@ instance applyTree :: Apply Tree where
 
 -- | Define applicative for tree
 instance applicativeTree :: Applicative Tree where
-  pure a = Node a Nil Nil
+  pure x = Node x Nil Nil
 
 -- | Define bind on tree.
 instance bindTree :: Bind Tree where
@@ -124,9 +100,9 @@ instance bindTree :: Bind Tree where
     go Nil = Nil
     go (Node y t1' t2') =
       Node y
-        ((bind t1 f) `orElse` t1')
-        ((bind t2 f) `orElse` t2')
-    -- Determine which bind tree to use (prefer bind result unless nil)
+        (t1' `orElse` (bind t1 f))
+        (t2' `orElse` (bind t2 f))
+    -- Determine which tree to use: choose first unless nil
     orElse Nil t = t
     orElse t _ = t
 
@@ -147,14 +123,14 @@ instance traversableTree :: Traversable Tree where
 -- | Build a tree from a foldable type.
 mkTree :: forall f a. Foldable f => Ord a => f a -> Tree a
 mkTree =
-  foldl (\t x -> x :+ t) Nil
+  foldl (\t x -> t +: x) Nil
 
 -- | Add an element to a tree
 insert :: forall a. Ord a => a -> Tree a -> Tree a
 insert x Nil = pure x
-insert x b@(Node y t1 t2) =
+insert x n@(Node y t1 t2) =
   case (compare x y) of
-    EQ -> b
+    EQ -> n
     GT -> Node y t1 (insert x t2)
     LT -> Node y (insert x t1) t2
 
@@ -171,9 +147,9 @@ infixl 5 insert' as +:
 -- | Search for the sub-tree with the given root element
 search :: forall a. Ord a => a -> Tree a -> Tree a
 search _ Nil = Nil
-search x b@(Node y t1 t2) =
+search x n@(Node y t1 t2) =
   case (compare x y) of
-    EQ -> b
+    EQ -> n
     LT -> search x t1
     GT -> search x t2
 
