@@ -33,10 +33,10 @@ import Control.Monad
   , bind
   , pure
   )
-import Data.Foldable (class Foldable, foldl)
+import Data.Foldable (class Foldable, foldl, foldr)
 import Data.Functor (class Functor)
 import Data.Maybe (Maybe(..))
-import Data.Monoid (class Monoid)
+import Data.Monoid (class Monoid, mempty)
 import Data.Ordering (Ordering(..))
 import Data.Semigroup (class Semigroup, (<>))
 import Data.Traversable (class Traversable, traverse, sequence)
@@ -78,7 +78,20 @@ instance monoidTree :: Semigroup (Tree a) => Monoid (Tree a) where
   mempty = Nil
 
 -- | Define how to fold over a tree.
-derive instance foldableTree :: Foldable Tree
+instance foldableTree :: Foldable Tree where
+  -- fold map
+  foldMap f =
+    foldl (\acc x -> acc <> (f x)) mempty
+  -- right fold
+  foldr _ acc Nil = acc
+  foldr f acc (Node x t1 t2) = foldr f acc' t1
+    where
+    acc' = f x (foldr f acc t2)
+  -- left fold
+  foldl _ acc Nil = acc
+  foldl f acc (Node x t1 t2) = foldl f acc' t2
+    where
+    acc' = f (foldl f acc t1) x
 
 -- | Define apply for tree.
 instance applyTree :: Apply Tree where

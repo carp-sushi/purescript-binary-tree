@@ -221,11 +221,11 @@ foldableTests = do
   suite "foldable tests" do
     let accShow = \acc x -> acc <> show x
     test "fold left" do
-      Assert.equal "4213769" (foldl accShow "" tree)
+      Assert.equal "1234679" (foldl accShow "" tree)
     test "fold right" do
-      Assert.equal "9673124" (foldr (flip accShow) "" tree)
+      Assert.equal "9764321" (foldr (flip accShow) "" tree)
     test "fold map" do
-      Assert.equal [ 8, 4, 2, 6, 14, 12, 18 ] (foldMap (\x -> [ 2 * x ]) tree)
+      Assert.equal [ 2, 4, 6, 8, 12, 14, 18 ] (foldMap (\x -> [ 2 * x ]) tree)
 
 -- Tests for traversable.
 -- TODO: What is runConst?
